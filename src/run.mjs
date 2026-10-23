@@ -5,7 +5,7 @@
 //
 // Usage: node src/run.mjs [ST ...]   (no states = all)   env PREVIOUS = published base URL
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { DIRECTORY } from './directory.mjs';
 import { STATES } from './lib.mjs';
 import * as md from './states/md.mjs';
@@ -82,4 +82,7 @@ for (const [st, dir] of Object.entries(DIRECTORY)) {
 
 writeFileSync(new URL('index.json', OUT), JSON.stringify(index));
 writeFileSync(new URL('.nojekyll', OUT), '');
+// Static pages published alongside the data (the app's privacy policy).
+const SITE = new URL('../site/', import.meta.url);
+if (existsSync(SITE)) cpSync(SITE, OUT, { recursive: true });
 console.log(`index: ${Object.keys(index.states).length} states`);
