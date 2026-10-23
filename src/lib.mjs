@@ -55,7 +55,7 @@ export function item(state, o) {
     county: o.county ?? '',
     date: o.date,
     when: o.when ?? 'day',
-    species: o.species ?? [],
+    species: [...new Set((o.species ?? []).map(fishName).filter(Boolean))],
     ...(o.count ? { count: o.count } : {}),
     ...(o.section ? { section: o.section } : {}),
     ...(o.detail ? { detail: o.detail } : {}),
@@ -74,4 +74,62 @@ export async function townPoint(state, name) {
     towns[state] = Object.fromEntries((j.features ?? []).map((f) => [f.attributes.BASENAME.toLowerCase(), [+f.attributes.INTPTLAT, +f.attributes.INTPTLON]]));
   }
   return towns[state][name.toLowerCase()] ?? null;
+}
+
+/** Small bait and forage fish states stock for food, not for anglers. */
+const FORAGE = /\b(chub|sucker|dace|fathead|minnow|shiner|shad|cisco|herring|alewife|smelt|sculpin)\b/i;
+
+/**
+ * One name per fish across every state: "RB", "Rainbow", "rainbow trout" -> "Rainbow Trout";
+ * "BASS LARGEMOUTH" -> "Largemouth Bass"; "MUSKIE TIGER" -> "Tiger Muskie". Forage fish -> null.
+ */
+export function fishName(raw) {
+  let s = String(raw ?? '').replace(/\s+/g, ' ').trim();
+  if (!s || FORAGE.test(s)) return null;
+  const t = s.toLowerCase();
+  const rules = [
+    [/golden rainbow|^golden$/, 'Golden Rainbow Trout'],
+    [/golden trout/, 'Golden Trout'],
+    [/steelhead/, 'Steelhead'],
+    [/cutbow/, 'Cutbow Trout'],
+    [/tiger trout/, 'Tiger Trout'],
+    [/tiger mus|muskie tiger|muskellunge tiger/, 'Tiger Muskie'],
+    [/splake/, 'Splake'],
+    [/lake trout/, 'Lake Trout'],
+    [/^rb$|rainbow/, 'Rainbow Trout'],
+    [/^bn$|brown/, 'Brown Trout'],
+    [/^bk$|brook/, 'Brook Trout'],
+    [/cutthroat/, 'Cutthroat Trout'],
+    [/grayling/, 'Arctic Grayling'],
+    [/chinook|king salmon/, 'Chinook Salmon'],
+    [/coho|silver salmon/, 'Coho Salmon'],
+    [/sockeye/, 'Sockeye Salmon'],
+    [/^chum|chum salmon/, 'Chum Salmon'],
+    [/^pink$|pink salmon/, 'Pink Salmon'],
+    [/kokanee/, 'Kokanee'],
+    [/landlocked|atlantic salmon/, 'Landlocked Salmon'],
+    [/saugeye/, 'Saugeye'],
+    [/sauger/, 'Sauger'],
+    [/walleye/, 'Walleye'],
+    [/muskellunge|muskie|musky/, 'Muskellunge'],
+    [/northern pike|^pike$/, 'Northern Pike'],
+    [/wiper|hybrid striped|striped bass hybrid/, 'Wiper (Hybrid Striped Bass)'],
+    [/striped bass|striper/, 'Striped Bass'],
+    [/white bass|bass white/, 'White Bass'],
+    [/largemouth/, 'Largemouth Bass'],
+    [/smallmouth/, 'Smallmouth Bass'],
+    [/channel cat|catfish channel/, 'Channel Catfish'],
+    [/blue cat|catfish blue/, 'Blue Catfish'],
+    [/flathead/, 'Flathead Catfish'],
+    [/bluegill/, 'Bluegill'],
+    [/redear/, 'Redear Sunfish'],
+    [/sunfish/, 'Sunfish'],
+    [/yellow perch|perch yellow/, 'Yellow Perch'],
+    [/crappie/, 'Crappie'],
+    [/sturgeon/, 'Sturgeon'],
+    [/paddlefish/, 'Paddlefish'],
+    [/whitefish/, 'Whitefish'],
+  ];
+  for (const [re, name] of rules) if (re.test(t)) return name;
+  return title(s);
 }

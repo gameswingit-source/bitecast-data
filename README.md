@@ -1,13 +1,14 @@
 # bitecast-data
 
-Nightly trout stocking collector for the BiteCast fishing app. A GitHub Action runs every morning,
+Nightly fish stocking collector for the BiteCast fishing app. A GitHub Action runs every morning,
 reads each state's official stocking data, and publishes one clean file per state to GitHub Pages:
 
 - `index.json`: all 50 states, with each wildlife agency's links, the kind of stocking data the
   state offers (`schedule` = dates ahead, `planned` = month or week ahead, `reports` = after the
   fact, `link` = official page only) and the state's bounding box.
 - `stocking/XX.json`: one file per state with a reader. Every stocking has the water, county, date
-  (`when`: `day`, `week` or `month`), species, and a point (exact, or the county centre when
+  (`when`: `day`, `week` or `month`), species (one standard name per fish across states, see
+`fishName()` in `src/lib.mjs`; bait and forage fish are left out), and a point (exact, or the county centre when
   `approx` is true).
 
 If a state's site fails one night, its last good file is kept and marked `ok: false`.
@@ -22,6 +23,8 @@ If a state's site fails one night, its last good file is kept and marked `ok: fa
 | MD | Maryland DNR recent stockings feed | reports |
 | VA | Virginia DWR trout stocking schedule (30 days back, 6 weeks ahead) | reports |
 | VT | Vermont Fish & Wildlife stocking plan (trophy trout streams by week) | planned |
+| UT | Utah DWR fish stocking report (every species) | reports |
+| WA | WDFW fish plants on data.wa.gov (trout, kokanee, salmon, steelhead) | reports |
 
 ## Link-only for now, and why
 

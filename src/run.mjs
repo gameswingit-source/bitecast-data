@@ -12,20 +12,22 @@ import * as md from './states/md.mjs';
 import * as nj from './states/nj.mjs';
 import * as ny from './states/ny.mjs';
 import * as pa from './states/pa.mjs';
+import * as ut from './states/ut.mjs';
 import * as va from './states/va.mjs';
 import * as vt from './states/vt.mjs';
+import * as wa from './states/wa.mjs';
 
-const READERS = { PA: pa, NY: ny, NJ: nj, MD: md, VA: va, VT: vt };
+const READERS = { PA: pa, NY: ny, NJ: nj, MD: md, VA: va, VT: vt, UT: ut, WA: wa };
 const OUT = new URL('../public/', import.meta.url);
 const PREVIOUS = process.env.PREVIOUS ?? '';
 
 mkdirSync(new URL('stocking/', OUT), { recursive: true });
 
-/** Keep the file small: drop anything older than 60 days, except a planned state's season plan. */
-const fresh = (items, kind) => {
+/** Keep this year's season (and anything in the last 60 days, across New Year), drop older. */
+const fresh = (items) => {
   const cutoff = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10);
   const year = String(new Date().getFullYear());
-  return items.filter((i) => i.date >= cutoff || i.when === 'month' || (kind === 'planned' && i.date.startsWith(year))).sort((a, b) => a.date.localeCompare(b.date) || a.water.localeCompare(b.water));
+  return items.filter((i) => i.date >= cutoff || i.date.startsWith(year)).sort((a, b) => a.date.localeCompare(b.date) || a.water.localeCompare(b.water));
 };
 
 async function previous(st) {
@@ -57,10 +59,14 @@ for (const [st, dir] of Object.entries(DIRECTORY)) {
   if (reader && (!only.length || only.includes(st))) {
     const started = Date.now();
     try {
-      const items = fresh(await reader.collect(), reader.kind);
+      const items = fresh(await reader.collect());
       const file = { state: st, kind: reader.kind, source: reader.source, updated: now, ok: true, items };
       writeFileSync(new URL(`stocking/${st}.json`, OUT), JSON.stringify(file));
-      Object.assign(entry, { updated: now, ok: true, count: items.length });
+      // Which fish this state stocks, most stocked first, for the app's state list.
+      const tally = {};
+      for (const i of items) for (const sp of i.species) tally[sp] = (tally[sp] ?? 0) + 1;
+      const species = Object.entries(tally).sort((a, b) => b[1] - a[1]).map(([k]) => k);
+      Object.assign(entry, { updated: now, ok: true, count: items.length, species });
       console.log(`${st}: ${items.length} stockings in ${((Date.now() - started) / 1000).toFixed(1)} s`);
     } catch (e) {
       const prev = await previous(st);
