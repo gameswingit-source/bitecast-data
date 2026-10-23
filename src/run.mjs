@@ -12,17 +12,20 @@ import * as md from './states/md.mjs';
 import * as nj from './states/nj.mjs';
 import * as ny from './states/ny.mjs';
 import * as pa from './states/pa.mjs';
+import * as va from './states/va.mjs';
+import * as vt from './states/vt.mjs';
 
-const READERS = { PA: pa, NY: ny, NJ: nj, MD: md };
+const READERS = { PA: pa, NY: ny, NJ: nj, MD: md, VA: va, VT: vt };
 const OUT = new URL('../public/', import.meta.url);
 const PREVIOUS = process.env.PREVIOUS ?? '';
 
 mkdirSync(new URL('stocking/', OUT), { recursive: true });
 
-/** Keep the file small: drop anything older than 60 days. */
-const fresh = (items) => {
+/** Keep the file small: drop anything older than 60 days, except a planned state's season plan. */
+const fresh = (items, kind) => {
   const cutoff = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10);
-  return items.filter((i) => i.date >= cutoff || i.when === 'month').sort((a, b) => a.date.localeCompare(b.date) || a.water.localeCompare(b.water));
+  const year = String(new Date().getFullYear());
+  return items.filter((i) => i.date >= cutoff || i.when === 'month' || (kind === 'planned' && i.date.startsWith(year))).sort((a, b) => a.date.localeCompare(b.date) || a.water.localeCompare(b.water));
 };
 
 async function previous(st) {
@@ -54,7 +57,7 @@ for (const [st, dir] of Object.entries(DIRECTORY)) {
   if (reader && (!only.length || only.includes(st))) {
     const started = Date.now();
     try {
-      const items = fresh(await reader.collect());
+      const items = fresh(await reader.collect(), reader.kind);
       const file = { state: st, kind: reader.kind, source: reader.source, updated: now, ok: true, items };
       writeFileSync(new URL(`stocking/${st}.json`, OUT), JSON.stringify(file));
       Object.assign(entry, { updated: now, ok: true, count: items.length });

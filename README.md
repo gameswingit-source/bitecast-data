@@ -20,6 +20,15 @@ If a state's site fails one night, its last good file is kept and marked `ok: fa
 | NJ | NJ Fish & Wildlife stocking schedule (NJDEP ArcGIS) | schedule |
 | NY | NY DEC planned spring stocking (data.ny.gov) | planned |
 | MD | Maryland DNR recent stockings feed | reports |
+| VA | Virginia DWR trout stocking schedule (30 days back, 6 weeks ahead) | reports |
+| VT | Vermont Fish & Wildlife stocking plan (trophy trout streams by week) | planned |
+
+## Link-only for now, and why
+
+- OH, MA, NH, WV: the sites refuse automated requests, and the collector doesn't get around that.
+- CT: the only report is a PDF of prose, not data.
+- ME: only yearly PDF summaries.
+
 
 Adding a state: write `src/states/xx.mjs` exporting `kind`, `source` and `collect()` (returning
 `item()`s from `src/lib.mjs`), then add it to `READERS` in `src/run.mjs`.

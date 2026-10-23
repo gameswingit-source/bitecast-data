@@ -7,5 +7,7 @@
     "collect": "node src/run.mjs",
     "check-links": "node tools/check-links.mjs"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }

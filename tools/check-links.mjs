@@ -7,7 +7,8 @@ const check = async (url) => {
   const t = setTimeout(() => ctl.abort(), 25000);
   try {
     const r = await fetch(url, { redirect: 'follow', signal: ctl.signal, headers: { 'User-Agent': 'Mozilla/5.0 (link check)' } });
-    return r.status;
+    // Some sites answer a missing page with 200 and a redirect to their 404 page.
+    return /404|not-?found/i.test(new URL(r.url).pathname + new URL(r.url).search) ? 'soft 404' : r.status;
   } catch (e) {
     return e.name === 'AbortError' ? 'timeout' : 'error';
   } finally {

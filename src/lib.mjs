@@ -31,7 +31,7 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export function countyPoint(state, county) {
   const list = COUNTIES[state];
   if (!list || !county) return null;
-  const norm = (s) => s.toLowerCase().replace(/\b(county|parish|borough|city and borough|census area)\b/g, '').replace(/[^a-z]/g, '');
+  const norm = (s) => s.toLowerCase().replace(/\b(county|parish|borough|city and borough|census area|city)\b/g, '').replace(/[^a-z]/g, '');
   const want = norm(county);
   const key = Object.keys(list).find((k) => norm(k) === want);
   return key ? list[key] : null;
@@ -62,4 +62,16 @@ export function item(state, o) {
     ...(o.meet ? { meet: o.meet } : {}),
     ...(p ? { lat: +(+p[0]).toFixed(5), lon: +(+p[1]).toFixed(5), approx: o.lat == null } : {}),
   };
+}
+
+const towns = {};
+/** Centre of a town (Census county subdivision), for states that list towns, not counties. */
+export async function townPoint(state, name) {
+  if (!name) return null;
+  if (!towns[state]) {
+    const fips = STATES[state]?.fips;
+    const j = await getJson(`https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/22/query?where=STATE%3D%27${fips}%27&outFields=BASENAME,INTPTLAT,INTPTLON&returnGeometry=false&f=json`);
+    towns[state] = Object.fromEntries((j.features ?? []).map((f) => [f.attributes.BASENAME.toLowerCase(), [+f.attributes.INTPTLAT, +f.attributes.INTPTLON]]));
+  }
+  return towns[state][name.toLowerCase()] ?? null;
 }
