@@ -1,0 +1,11 @@
+{
+  "name": "bitecast-data",
+  "private": true,
+  "type": "module",
+  "description": "Nightly trout stocking collector for the BiteCast app.",
+  "scripts": {
+    "collect": "node src/run.mjs",
+    "check-links": "node tools/check-links.mjs"
+  },
+  "engines": { "node": ">=20" }
+}
